@@ -1,6 +1,6 @@
 require "active_support/core_ext/integer/time"
 
-Rails. application.routes.default_url_options = { 
+Rails.application.routes.default_url_options = { 
   host: ENV['HOST_URL']
 }
 

@@ -1,0 +1,3 @@
+push_notifications_job:
+  cron: "0 1 * * *" # every day at 1 AM
+  class: "PushNotificationJob"

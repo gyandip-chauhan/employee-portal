@@ -1,3 +1,6 @@
+require "sidekiq/web"
+require "sidekiq/cron/web"
+
 Rails.application.routes.draw do
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
   
@@ -7,6 +10,9 @@ Rails.application.routes.draw do
   
   # action cable server
   mount ActionCable.server => "/cable"
+
+  # Sidekiq server
+  mount Sidekiq::Web, at: "/sidekiq"
 
   # Defines the root path route ("/")
   

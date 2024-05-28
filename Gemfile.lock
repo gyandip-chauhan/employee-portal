@@ -75,6 +75,9 @@ GEM
       minitest (>= 5.1)
       mutex_m
       tzinfo (~> 2.0)
+    apnotic (1.7.2)
+      connection_pool (~> 2)
+      net-http2 (>= 0.18.3, < 2)
     base64 (0.2.0)
     bcrypt (3.1.20)
     bigdecimal (3.1.7)
@@ -99,10 +102,16 @@ GEM
       railties (>= 6.1)
     drb (2.2.1)
     erubi (1.12.0)
+    et-orbi (1.2.11)
+      tzinfo
     fast_jsonapi (1.5)
       activesupport (>= 4.2)
+    fugit (1.11.0)
+      et-orbi (~> 1, >= 1.2.11)
+      raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    http-2 (0.11.0)
     i18n (1.14.4)
       concurrent-ruby (~> 1.0)
     io-console (0.7.2)
@@ -127,6 +136,8 @@ GEM
     minitest (5.22.3)
     msgpack (1.7.2)
     mutex_m (0.2.0)
+    net-http2 (0.18.5)
+      http-2 (~> 0.11)
     net-imap (0.4.10)
       date
       net-protocol
@@ -154,6 +165,7 @@ GEM
       stringio
     puma (6.4.2)
       nio4r (~> 2.0)
+    raabro (1.4.0)
     racc (1.7.3)
     rack (3.0.10)
     rack-cors (2.0.2)
@@ -204,6 +216,15 @@ GEM
     reline (0.5.4)
       io-console (~> 0.5)
     rolify (6.0.1)
+    sidekiq (7.2.4)
+      concurrent-ruby (< 2)
+      connection_pool (>= 2.3.0)
+      rack (>= 2.2.4)
+      redis-client (>= 0.19.0)
+    sidekiq-cron (1.12.0)
+      fugit (~> 1.8)
+      globalid (>= 1.0.1)
+      sidekiq (>= 6)
     sprockets (4.2.1)
       concurrent-ruby (~> 1.0)
       rack (>= 2.2.4, < 4)
@@ -242,6 +263,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  apnotic
   bcrypt (~> 3.1.7)
   bootsnap
   cssbundling-rails
@@ -257,6 +279,8 @@ DEPENDENCIES
   rails (~> 7.1.3, >= 7.1.3.2)
   redis (>= 4.0.1)
   rolify
+  sidekiq
+  sidekiq-cron
   sprockets-rails
   stimulus-rails
   turbo-rails

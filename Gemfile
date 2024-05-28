@@ -48,6 +48,9 @@ gem 'rack-cors'
 gem 'rolify'
 gem 'discard'
 gem 'fast_jsonapi'
+gem 'apnotic'
+gem 'sidekiq'
+gem 'sidekiq-cron'
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 # gem "image_processing", "~> 1.2"
