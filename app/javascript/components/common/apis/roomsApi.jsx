@@ -1,3 +1,4 @@
+// src/common/apis/roomsApi.js
 import axios from "../apiService";
 
 const path = "/rooms";

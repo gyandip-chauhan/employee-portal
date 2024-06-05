@@ -1,3 +1,4 @@
+// src/common/apis/messagesApi.js
 import axios from "../apiService";
 
 const path = "/messages";
@@ -7,5 +8,4 @@ const getMessages = async (query = "") => axios.get(query ? `${path}?${query}` :
 
 const messagesApi = { create, getMessages };
 
-export default messagesApi
-
+export default messagesApi;

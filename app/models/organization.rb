@@ -1,5 +1,5 @@
 class Organization < ApplicationRecord
-  has_many :deparments, dependent: :destroy
+  has_many :departments, dependent: :destroy
   has_many :users, dependent: :destroy
 
   def shift_duration

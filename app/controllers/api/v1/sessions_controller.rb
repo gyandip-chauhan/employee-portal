@@ -15,7 +15,7 @@ module Api::V1
 
     def destroy
       logout current_user
-      render json: { notice: "YYou have been logged out." }, status: :ok
+      render json: { notice: "You have been logged out." }, status: :ok
     end
   end
 end

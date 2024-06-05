@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import ApiService from '../common/apiService';
+import { API_FORGOT_PASSWORD } from '../common/apiEndpoints';
+import { toast } from 'react-toastify';
 
 const ResetPassword = () => {
   const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
@@ -13,21 +14,15 @@ const ResetPassword = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch('/api/v1/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Reset password request failed');
-      }
-
-      setMessage('Reset password link sent to your email');
+      const response = await ApiService.post(API_FORGOT_PASSWORD, { email });
+      toast.success(`${response.data.notice}`);
     } catch (error) {
-      setError('Reset password request failed. Please try again.');
+      const err = error;
+      if (err.response && err.response.data && err.response.data.error) {
+        toast.error(err.response.data.error);
+      } else {
+        toast.error(`${err}`);
+      }
     }
   };
 
@@ -50,9 +45,6 @@ const ResetPassword = () => {
                     onChange={handleEmailChange}
                   />
                 </div>
-
-                {message && <div className="alert alert-success">{message}</div>}
-                {error && <div className="alert alert-danger">{error}</div>}
 
                 <button type="submit" className="btn btn-primary">Reset Password</button>
               </form>

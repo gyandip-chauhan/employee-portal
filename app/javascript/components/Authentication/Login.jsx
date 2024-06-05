@@ -5,7 +5,7 @@ import ApiService from '../common/apiService';
 import { API_LOGIN } from '../common/apiEndpoints';
 import { toast } from 'react-toastify';
 
-const Login = ({ setUserData }) => {
+const Login = ({ setUserData, setDepartmentId }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -26,6 +26,7 @@ const Login = ({ setUserData }) => {
       const response = await ApiService.post(API_LOGIN, { email, password });
       localStorage.setItem('userData', JSON.stringify(response.data.user));
       setUserData(response.data.user);
+      setDepartmentId(response.data.user.department_id)
       navigate('/');
       toast.success(`${response.data.notice}`);
     } catch (error) {

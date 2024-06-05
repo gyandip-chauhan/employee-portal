@@ -5,16 +5,11 @@ class Attendance < ApplicationRecord
 
   validates :date, uniqueness: { scope: :user_id, message: "Attendance already exists for this date" }
 
-  after_create :build_attendance_log
   after_touch :calculate_metrics
 
   default_scope { order(date: :desc) }
 
   private
-
-  def build_attendance_log
-    attendance_logs.create!(clock_in_time: Time.now)
-  end
 
   def calculate_metrics
     logs = attendance_logs.where.not(clock_out_time: nil).order(:clock_in_time)

@@ -5,7 +5,7 @@ import { API_SIGNUP } from '../common/apiEndpoints';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
-const Signup = ({ setUserData }) => {
+const Signup = ({ setUserData, setDepartmentId }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -37,6 +37,7 @@ const Signup = ({ setUserData }) => {
       localStorage.setItem('userData', JSON.stringify(response.data.user));
       console.log("response.data", response.data)
       setUserData(response.data.user);
+      setDepartmentId(response.data.user.department_id)
       navigate('/');
       toast.success(`${response.data.notice}`);
     } catch (error) {

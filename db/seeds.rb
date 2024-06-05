@@ -45,3 +45,35 @@ organizations.each do |org_name|
 end
 puts "Organizations and Departments are created successfully."
 
+# Eager load roles, departments, and organizations to prevent N+1 queries
+all_roles = Role.all.index_by(&:name)
+all_departments = Department.includes(:organization).all.group_by { |d| [d.name, d.organization.name] }
+all_organizations = Organization.all.index_by(&:name)
+
+# Users
+users = [
+  {first_name: 'Natvar', last_name: 'Mistry', email: 'ceo@example.com', password: 'password', role: 'CEO', department: 'Management', organization: 'Atharva System'},
+  {first_name: 'Dharmdipsinh', last_name: 'Rathod', email: 'cto@example.com', password: 'password', role: 'CTO', department: 'Management', organization: 'Atharva System'},
+  {first_name: 'Poonam', last_name: 'Kakkad', email: 'hr@example.com', password: 'password', role: 'HR Manager', department: 'HR', organization: 'Atharva System'},
+  {first_name: 'Hardik', last_name: 'Upadhyay', email: 'employee@example.com', password: 'password', role: 'Software Engineer', department: 'ROR', organization: 'Atharva System'},
+  # Add more users as needed
+]
+
+users.each do |user_data|
+  role = all_roles[user_data[:role]]
+  department = all_departments[[user_data[:department], user_data[:organization]]]&.first
+  organization = all_organizations[user_data[:organization]]
+
+  user = User.find_or_create_by!(email: user_data[:email]) do |u|
+    u.first_name = user_data[:first_name]
+    u.last_name = user_data[:last_name]
+    u.password = user_data[:password]
+    u.password_confirmation = user_data[:password]
+    u.department = department
+    u.organization = organization
+  end
+
+  # Assign role using rolify
+  user.add_role(role.name)
+end
+puts "Users are created successfully."

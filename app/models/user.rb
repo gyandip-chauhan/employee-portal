@@ -5,7 +5,11 @@ class User < ApplicationRecord
   belongs_to :department
   belongs_to :organization
   has_many :attendances, dependent: :destroy
+  has_many :attendance_logs, through: :attendances
   has_many :messages, dependent: :destroy
+  has_many :participants, dependent: :destroy
+  has_many :rooms, through: :participants
+  has_many :team_memberships, dependent: :destroy
 
   validates :email, presence: true
   normalizes :email, with: -> email { email.downcase.strip }
@@ -20,32 +24,32 @@ class User < ApplicationRecord
     email
   end
 
-  before_validation :assign_default_values
-
   def username
-    return self.email.split('@').first.titleize
+    return full_name#self.email.split('@').first.titleize
   end
 
   def name
     username
   end
 
+  def full_name
+    "#{first_name} #{last_name}"
+  end
+
+  def job_title
+    roles.pluck(:name).join(', ')
+  end
+
+  def department_name
+    department.name
+  end
+
   def serialize
     { id:,
-      name:,
+      name: full_name,
       username:,
-      message: messages&.last&.content || nil
+      message: messages&.last&.content || nil,
+      unread_messages_count: participants.sum(:unread_messages_count)
     }
-  end 
-
-  private
-
-  def assign_default_values
-    organization_id = self.organization_id
-    unless organization_id
-      organization_id = Organization.find_by(name: 'Atharva System')&.id
-      self.organization_id = organization_id
-    end
-    self.department_id = Department.find_by(name: 'Unassigned', organization_id: organization_id)&.id
   end
 end

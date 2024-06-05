@@ -10,9 +10,11 @@ export const API_ATTENDANCES = '/attendances';
 export const API_REMOTE_CLOCK_IN = '/remote_clock_in';
 export const API_REMOTE_CLOCK_OUT = '/remote_clock_out';
 
-export const CABLE_URL = 'ws://192.168.31.227:3000/cable'
+export const CABLE_URL = 'ws://192.168.31.169:3000/cable'
 export const API_SEND_MESSAGE = '/messages'
 export const API_ALL_MESSAGES = '/messages'
+
+export const API_TEAM_SUMMARY = (id) => `/teams/${id}`
 
 // export const API_SHOWTIMES = (movieId: string, selectedDate: string, selectedPriceRange: string, selectedTheater: string, selectedScreen: string) => `/showtimes?movie_id=${movieId}&date=${selectedDate}&price_range=${selectedPriceRange}&theater_id=${selectedTheater}&screen_id=${selectedScreen}`;
 // export const API_SHOWTIME_DETAILS = (id: string, theater_id: string, screen_id: string, movie_id: string) => `/showtimes/${id}?theater_id=${theater_id}&screen_id=${screen_id}&movie_id=${movie_id}`;

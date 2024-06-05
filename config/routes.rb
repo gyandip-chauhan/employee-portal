@@ -2,6 +2,20 @@ require "sidekiq/web"
 require "sidekiq/cron/web"
 
 Rails.application.routes.draw do
+  namespace :admin do
+    resources :attendances
+    resources :attendance_logs
+    resources :departments
+    resources :messages
+    resources :organizations
+    resources :participants
+    resources :roles
+    resources :rooms
+    resources :users
+    resources :team_memberships
+
+    root to: "attendances#index"
+  end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
   
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
@@ -29,6 +43,7 @@ Rails.application.routes.draw do
       put "remote_clock_out", to: "attendances#update", as: "remote_clock_out"
       resources :messages, only: [:index, :create]
       resources :rooms, only: [:index, :create, :show]
+      resources :teams, only: [:index, :show]
     end
   end
   root 'homepage#index'
