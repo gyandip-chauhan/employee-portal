@@ -13,7 +13,9 @@ class Message < ApplicationRecord
       username: user.username,
       room_id: room_id,
       content: content,
-      created_at: created_at
+      created_at: created_at,
+      online: user.online,
+      online_at: user.online_at,
     }
   end
 

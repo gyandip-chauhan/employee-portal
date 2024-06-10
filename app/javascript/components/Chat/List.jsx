@@ -22,45 +22,48 @@ const List = ({ userData }) => {
     const chatChannel = cable.subscriptions.create('MessagesChannel', {
       received: (data) => {
         const senderName = data.msg_of === 'room' ? roomsList.find(room => room.id === data.sender_id)?.name : usersList.find(user => user.id === data.sender_id)?.username;
-        const newMessage = { 
-          id: data.id, 
-          user_id: data.sender_id, 
-          username: senderName, 
-          content: data.content, 
-          room_id: data.room_id 
+        const newMessage = {
+          id: data.id,
+          user_id: data.sender_id,
+          username: senderName,
+          content: data.content,
+          room_id: data.room_id
         };
-      
+
         const updatedRoomsList = roomsList.map(room => {
           if (room.id === data.room_id) {
             return { ...room, unread_messages_count: data.unread_count };
           }
           return room;
         });
-      
+
         const updatedUsersList = usersList.map(user => {
           if (user.id === data.sender_id) {
             return { ...user, unread_messages_count: data.unread_count };
           }
+          if (user.id === data.user_id && data.typing_for.id === currentUser.id) {
+            return { ...user, is_typing: data.is_typing };
+          }
           return user;
         });
-      
+
         // Update UI with new message and unread count
         setRoomsList(updatedRoomsList);
         setUsersList(updatedUsersList);
-      
-        if (data.room_id === selectedRoomId) {
+
+        if (data.room_id === selectedRoomId && data.content) {
           setMessagesList(list => [...list, newMessage]);
-        } else {
+        }
+        if (data.msg_for === currentUser.id) {
           // Increment unread count in the chat list
           toast.info('You have new messages');
         }
-      }      
+      }
     });
     return () => {
       chatChannel.unsubscribe();
     };
   }, [selectedRoomId, roomsList]);
-  
 
   useEffect(() => {
     fetchRooms();
@@ -76,7 +79,7 @@ const List = ({ userData }) => {
       console.error("error:", error.message);
       toast.error(error.message);
     }
-  };  
+  };
 
   const fetchMessages = async () => {
     try {
@@ -95,6 +98,9 @@ const List = ({ userData }) => {
       const errorMessage = error.response?.data?.error || `${error}`;
       toast.error(errorMessage);
     }
+  };
+  const handleTyping = (isUserTyping) => {
+    messagesApi.typing({ room_id: selectedRoomId, is_typing: isUserTyping })
   };
 
   const handleRoomCreate = async (event) => {
@@ -116,7 +122,7 @@ const List = ({ userData }) => {
       await messagesApi.create({ message: { content: messageField, room_id: selectedRoomId, user_id: userData?.id }, is_private: isPrivate });
       setParams({ ...params, item: 15, reset_unread: true }); // Reset unread count
       fetchMessages();
-  
+
       // Update unread count in UI
       setRoomsList(roomsList.map(room => {
         if (room.id === selectedRoomId) {
@@ -135,13 +141,13 @@ const List = ({ userData }) => {
       const errorMessage = error.response?.data?.error || `${error}`;
       toast.error(errorMessage);
     }
-  };  
+  };
 
   const handleSelected = (id, msgFor, roomName) => {
     setSelectedRoom(roomName);
     setSelectedRoomId(id);
     setParams({ ...params, id: id, msg_of: msgFor, item: 15, reset_unread: true });
-  };  
+  };
 
   useEffect(() => {
     if (params.id) {
@@ -149,26 +155,51 @@ const List = ({ userData }) => {
     }
   }, [params]);
 
+  const isUserOnlineRecently = (online, at) => {
+    if (!online || !at) return false
+
+    const diffInMinutes = Math.round((new Date() - new Date(at)) / 60000);
+    const diffInSeconds = Math.round((new Date() - new Date(at)) / 1000);
+
+    return diffInMinutes <= 1;
+  }
+
   const ListView = () => (
     <div className="user-list max-h-60 overflow-y-auto">
       {roomsList.map(room => (
         <div key={room.id} onClick={() => handleSelected(room.id, "room", room.name)} className={`user-item ${selectedRoom === room.name ? 'active' : ''}`}>
-          {room.name} 
+          {room.name}
           {room.unread_messages_count > 0 && (
             <span className="badge">({room.unread_messages_count})</span>
           )}
         </div>
       ))}
       {usersList.map(user => (
-        <div key={user.id} onClick={() => handleSelected(user.id, "user", user.username)} className={`user-item ${selectedRoom === user.username ? 'active' : ''}`}>
-          {user.username}
-          {user.unread_messages_count > 0 && (
-            <span className="badge">({user.unread_messages_count})</span>
+        <div
+          key={user.id}
+          onClick={() => handleSelected(user.id, "user", user.username)}
+          className={`user-item d-flex align-items-center justify-content-between ${selectedRoom === user.username ? 'active' : ''}`}
+        >
+          <span className="flex-grow-1">
+            {user.username}
+            {user.unread_messages_count > 0 && (
+              <span className="badge bg-danger ms-2">({user.unread_messages_count})</span>
+            )}
+          </span>
+          {isUserOnlineRecently(user.online, user.online_at) && (
+            <div
+              className="rounded-circle bg-success mx-3"
+              style={{ width: "18px", height: "18px" }}
+            />
+          )}
+          {user.is_typing && (<>
+            <div key={user.id}>{`User ${user.username} is typing...`}</div>
+          </>
           )}
         </div>
       ))}
     </div>
-  );    
+  );
 
   const MessageListView = () => (
     <div className="message-board">
@@ -188,7 +219,11 @@ const List = ({ userData }) => {
         )}
       </div>
     </div>
-  );  
+  );
+  const handleMessageInputChange = (e) => {
+    setMessageField(e.target.value);
+    handleTyping(e.target.value.length > 0)
+  };
 
   return (
     <div className="chat-page">
@@ -219,7 +254,10 @@ const List = ({ userData }) => {
             <MessageListView />
             <div className="message-input">
               <form onSubmit={handleSendMessage}>
-                <input type="text" value={messageField} onChange={(e) => setMessageField(e.target.value)} placeholder="Type a message..." />
+                <input type="text" value={messageField}
+                  onChange={handleMessageInputChange}
+                  onBlur={() => handleTyping(false)}
+                  placeholder="Type a message..." />
                 <button type="submit" disabled={messageField === ''}>Send</button>
               </form>
             </div>

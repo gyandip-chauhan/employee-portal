@@ -6,7 +6,7 @@ class PushNotificationJob < ApplicationJob
     # devices.each do |device|
     #   send_notification(device.token)
     # end
-    send_notification
+    # send_notification
   end
 
   private

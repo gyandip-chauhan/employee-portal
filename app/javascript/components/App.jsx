@@ -6,7 +6,7 @@ import Home from "../components/Home";
 import Header from '../components/Layout/Header';
 import Footer from '../components/Layout/Footer';
 import LoginPage from '../components/Authentication/Login';
-import SignupPage from '../components/Authentication/Signup';
+import ForgetPasswordPage from '../components/Authentication/ForgetPassword';
 import ResetPasswordPage from '../components/Authentication/ResetPassword';
 import ChangePasswordPage from '../components/Authentication/ChangePassword';
 import AttendancePage from '../components/Attendance/List';
@@ -41,8 +41,8 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home userData={userData} />} />
           <Route path="/login" element={<LoginPage setUserData={setUserData} setDepartmentId={setDepartmentId} />} />
-          <Route path="/signup" element={<SignupPage setUserData={setUserData} setDepartmentId={setDepartmentId} />} />
-          <Route path="/forgot-password" element={<ResetPasswordPage />} />
+          <Route path="/forgot-password" element={<ForgetPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />
           <Route path="/attendance" element={<AttendancePage userData={userData} />} />
           <Route path="/chat" element={<ChatPage userData={userData} />} />

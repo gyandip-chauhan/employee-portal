@@ -1,6 +1,6 @@
 module Api::V1
   class ApplicationController < ActionController::Base
-    private
+  private
     def authenticate_user!
       render json: { error: "You must be logged in to do that." }, status: :unprocessable_entity unless user_signed_in?
     end

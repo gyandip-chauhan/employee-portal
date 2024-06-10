@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   rolify
   has_secure_password
+  after_create :welcome_note
   
   belongs_to :department
   belongs_to :organization
@@ -33,7 +34,7 @@ class User < ApplicationRecord
   end
 
   def full_name
-    "#{first_name} #{last_name}"
+    "#{first_name.titleize} #{last_name.titleize}"
   end
 
   def job_title
@@ -44,12 +45,18 @@ class User < ApplicationRecord
     department.name
   end
 
+  def welcome_note
+    PasswordMailer.with(user: self, token: generate_token_for(:password_reset)).set_password.deliver_later
+  end
+
   def serialize
     { id:,
       name: full_name,
       username:,
       message: messages&.last&.content || nil,
-      unread_messages_count: participants.sum(:unread_messages_count)
+      unread_messages_count: participants.sum(:unread_messages_count),
+      online: ,
+      online_at:
     }
   end
 end
