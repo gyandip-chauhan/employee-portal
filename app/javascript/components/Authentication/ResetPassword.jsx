@@ -1,20 +1,40 @@
 import React, { useState } from 'react';
 import ApiService from '../common/apiService';
-import { API_FORGOT_PASSWORD } from '../common/apiEndpoints';
+import { API_RESET_PASSWORD } from '../common/apiEndpoints';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const ResetPassword = () => {
-  const [email, setEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [error, setError] = useState('');
+  const searchParams = new URLSearchParams(location.search);
+  const resetToken = searchParams.get('token');
+  const isNewUser = searchParams.get('new');
+  const label = isNewUser ? "Set" : "Reset"
 
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleNewPasswordChange = (e) => {
+    setNewPassword(e.target.value);
+  };
+
+  const handleConfirmNewPasswordChange = (e) => {
+    setConfirmNewPassword(e.target.value);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (newPassword !== confirmNewPassword) {
+      setError('New passwords do not match');
+      return;
+    }
+
     try {
-      const response = await ApiService.post(API_FORGOT_PASSWORD, { email });
+      const response = await ApiService.put(API_RESET_PASSWORD, { user: { password: newPassword, password_confirmation: confirmNewPassword }, token: resetToken });
+      navigate('/login');
       toast.success(`${response.data.notice}`);
     } catch (error) {
       const err = error;
@@ -32,21 +52,34 @@ const ResetPassword = () => {
         <div className="col-md-6">
           <div className="card shadow-lg">
             <div className="card-body">
-              <h1 className="card-title text-center mb-4">Reset Password Page</h1>
+              <h1 className="card-title text-center mb-4">{label} Password Page</h1>
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Email address</label>
+                  <label htmlFor="newPassword" className="form-label">New Password</label>
                   <input
-                    type="email"
+                    type="password"
                     className="form-control"
-                    id="email"
-                    placeholder="Enter email"
-                    value={email}
-                    onChange={handleEmailChange}
+                    id="newPassword"
+                    placeholder="Enter new password"
+                    value={newPassword}
+                    onChange={handleNewPasswordChange}
                   />
                 </div>
 
-                <button type="submit" className="btn btn-primary">Reset Password</button>
+                <div className="mb-3">
+                  <label htmlFor="confirmNewPassword" className="form-label">Confirm New Password</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    id="confirmNewPassword"
+                    placeholder="Confirm new password"
+                    value={confirmNewPassword}
+                    onChange={handleConfirmNewPasswordChange}
+                  />
+                </div>
+
+                {error && <div className="alert alert-danger">{error}</div>}
+                <button type="submit" className="btn btn-primary">{label} Password</button>
               </form>
             </div>
           </div>

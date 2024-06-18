@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2024_06_04_094225) do
+ActiveRecord::Schema[7.1].define(version: 2024_06_10_072335) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -72,6 +72,7 @@ ActiveRecord::Schema[7.1].define(version: 2024_06_04_094225) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "unread_messages_count", default: 0
+    t.boolean "is_typing", default: false
     t.index ["room_id"], name: "index_participants_on_room_id"
     t.index ["user_id"], name: "index_participants_on_user_id"
   end
@@ -121,6 +122,8 @@ ActiveRecord::Schema[7.1].define(version: 2024_06_04_094225) do
     t.bigint "organization_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "online", default: false
+    t.datetime "online_at"
     t.index ["department_id"], name: "index_users_on_department_id"
     t.index ["discarded_at"], name: "index_users_on_discarded_at"
     t.index ["email"], name: "index_users_on_email", unique: true

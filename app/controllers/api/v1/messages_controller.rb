@@ -1,4 +1,3 @@
-# app/controllers/api/v1/messages_controller.rb
 module Api::V1
   class MessagesController < ApplicationController
     before_action :find_room, only: [:index, :create]
@@ -17,14 +16,23 @@ module Api::V1
         sender_type = params[:msg_of] == 'room' ? 'room' : 'user'
         serialized_message[:sender_id] = sender_id
         serialized_message[:msg_of] = sender_type
-    
+        serialized_message[:msg_for] = Participant.other_user(current_user, @message.room_id)&.user_id || nil
+
         ActionCable.server.broadcast('MessagesChannel', serialized_message.merge(unread_count: @message.room.participants.sum(:unread_messages_count)))
         render json: @message, status: :created
       else
         render json: @message.errors, status: :unprocessable_entity
       end
     end
-    
+
+    def typing
+      @participant = Participant.find_by(user_id: current_user.id, room_id: params[:room_id])
+      @participant.update(is_typing: params[:is_typing])
+      ActionCable.server.broadcast("MessagesChannel", { room_id: params[:room_id], user_id: current_user.id, is_typing: params[:is_typing], 
+       typing_for: Participant.other_user(current_user, params[:room_id])&.user.serialize
+    })
+      head :ok
+    end
 
     private
 
