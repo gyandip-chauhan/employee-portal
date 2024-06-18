@@ -41,7 +41,11 @@ Rails.application.routes.draw do
       get "attendances", to: "attendances#index", as: "attendances"
       post "remote_clock_in", to: "attendances#create", as: "remote_clock_in"
       put "remote_clock_out", to: "attendances#update", as: "remote_clock_out"
-      resources :messages, only: [:index, :create]
+      resources :messages, only: [:index, :create] do
+        collection do
+          post 'typing'
+        end
+      end
       resources :rooms, only: [:index, :create, :show]
       resources :teams, only: [:index, :show]
     end

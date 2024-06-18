@@ -23,7 +23,8 @@ class UserDashboard < Administrate::BaseDashboard
     last_sign_in_ip: Field::String,
     messages: Field::HasMany,
     organization: Field::BelongsTo,
-    password_digest: Field::String,
+    password: Field::String,
+    password_confirmation: Field::String,
     personal_email: Field::String,
     phone: Field::String,
     roles: Field::HasMany,
@@ -63,7 +64,6 @@ class UserDashboard < Administrate::BaseDashboard
     last_sign_in_ip
     messages
     organization
-    password_digest
     personal_email
     phone
     roles
@@ -91,7 +91,8 @@ class UserDashboard < Administrate::BaseDashboard
     last_sign_in_ip
     messages
     organization
-    password_digest
+    password
+    password_confirmation
     personal_email
     phone
     roles

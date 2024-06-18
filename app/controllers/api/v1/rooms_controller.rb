@@ -1,5 +1,7 @@
 module Api::V1
   class RoomsController < ApplicationController
+    include ActiveUser
+    
     def index
       room = Room.new
       rooms = Room.public_rooms.map{ |r| r.serialize }
