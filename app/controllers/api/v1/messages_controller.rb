@@ -1,11 +1,12 @@
 module Api::V1
   class MessagesController < ApplicationController
+    include ActiveUser
     before_action :find_room, only: [:index, :create]
 
     def index
       @messages = @room.messages.last(params[:item] || 20).map(&:serialize)
       reset_unread_count if params[:reset_unread]
-      render json: { single_room: @room.serialize, messages: @messages }, status: :ok
+      render json: { single_room: @room.serialize, messages: @messages, user: message_for}, status: :ok
     end
 
     def create
@@ -54,6 +55,10 @@ module Api::V1
     def get_name(user1, user2)
       users = [user1, user2].sort
       "private_#{users[0].id}_#{users[1].id}"
+    end
+
+    def message_for
+      Participant.other_user(current_user.id, find_room)&.user
     end
 
     def message_params

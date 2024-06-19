@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import roomsApi from '../common/apis/roomsApi';
 import messagesApi from '../common/apis/messagesApi';
 import ActionCable from 'actioncable';
+import { formattedDateTime } from '../common/helpers/formattedDateTime';
 import { toast } from 'react-toastify';
 
 const List = ({ userData }) => {
@@ -15,6 +16,12 @@ const List = ({ userData }) => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [params, setParams] = useState({ item: 15 });
+  const [userStatus, setUserStatus] = useState({ online: false, onlineAt: null })
+  const [selectedUser, setSelectedUser] = useState({ user: 0, for: 0, typing: false })
+  const [selectedUserId, setSelectedUserId] = useState(0)
+  const [isTyping, setIsTyping] = useState(false)
+  const typingTimeoutRef = useRef(null);
+  const messageListRef = useRef(null);
   const queryParams = () => new URLSearchParams(params).toString();
 
   useEffect(() => {
@@ -54,7 +61,26 @@ const List = ({ userData }) => {
         if (data.room_id === selectedRoomId && data.content) {
           setMessagesList(list => [...list, newMessage]);
         }
-        if (data.msg_for === currentUser.id) {
+
+        const updatedUsersStatus = updatedUsersList.map(user => {
+          if (data.status && user.id === data.user_id) {
+            setUserStatus({ online: data.online, onlineAt: data.online_at })
+            return { ...user, online: data.online, online_at: data.online_at };
+          }
+          return user;
+        });
+        if (currentUser && data.typing_for && currentUser.id === data.typing_for?.id) {
+          setSelectedUser({ user: data.user_id, for: data.typing_for.id, typing: data.is_typing })
+        }
+        setRoomsList(updatedRoomsList);
+        setUsersList(updatedUsersStatus);
+
+        if (data.room_id === selectedRoomId && data.content) {
+          setMessagesList(list => [...list, newMessage]);
+          scrollToBottom();
+        }
+        if (data.msg_for === selectedRoomId) {
+
           // Increment unread count in the chat list
           toast.info('You have new messages');
         }
@@ -76,7 +102,7 @@ const List = ({ userData }) => {
       setRoomsList(response.data.rooms.map(room => ({ ...room, unread_messages_count: room.unread_messages_count || 0 })));
       setCurrentUser(response.data.current_user);
     } catch (error) {
-      console.error("error:", error.message);
+
       toast.error(error.message);
     }
   };
@@ -85,6 +111,8 @@ const List = ({ userData }) => {
     try {
       const response = await messagesApi.getMessages(queryParams());
       setMessagesList(response.data.messages);
+      setUserStatus({ online: response.data.user.online, onlineAt: response.data.user.online_at });
+      scrollToBottom();
       setSelectedRoomId(response.data.single_room.id);
 
       // Reset unread count
@@ -141,6 +169,7 @@ const List = ({ userData }) => {
       const errorMessage = error.response?.data?.error || `${error}`;
       toast.error(errorMessage);
     }
+    scrollToBottom();
   };
 
   const handleSelected = (id, msgFor, roomName) => {
@@ -161,7 +190,7 @@ const List = ({ userData }) => {
     const diffInMinutes = Math.round((new Date() - new Date(at)) / 60000);
     const diffInSeconds = Math.round((new Date() - new Date(at)) / 1000);
 
-    return diffInMinutes <= 1;
+    return diffInSeconds <= 10;
   }
 
   const ListView = () => (
@@ -175,42 +204,50 @@ const List = ({ userData }) => {
         </div>
       ))}
       {usersList.map(user => (
-        <div
-          key={user.id}
-          onClick={() => handleSelected(user.id, "user", user.username)}
-          className={`user-item d-flex align-items-center justify-content-between ${selectedRoom === user.username ? 'active' : ''}`}
-        >
-          <span className="flex-grow-1">
-            {user.username}
-            {user.unread_messages_count > 0 && (
-              <span className="badge bg-danger ms-2">({user.unread_messages_count})</span>
-            )}
-          </span>
-          {isUserOnlineRecently(user.online, user.online_at) && (
-            <div
-              className="rounded-circle bg-success mx-3"
-              style={{ width: "18px", height: "18px" }}
-            />
+        <div key={user.id} onClick={() => { handleSelected(user.id, "user", user.username); setSelectedUserId(user.id) }} className={`user-item ${selectedRoom === user.username ? 'active' : ''}`}>
+          {user.username}
+          {user.unread_messages_count > 0 && (
+            <span className="badge">({user.unread_messages_count})</span>
           )}
-          {user.is_typing && (<>
-            <div key={user.id}>{`User ${user.username} is typing...`}</div>
-          </>
-          )}
+          {user.is_typing && <div>typing...</div>}
         </div>
       ))}
     </div>
   );
 
+  const scrollToBottom = () => {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messagesList]);
+
+  const checkUserTyping = () => {
+    return selectedUser.user === selectedUserId &&
+      selectedUser.for === currentUser.id &&
+      selectedUser.typing;
+  };
+
   const MessageListView = () => (
     <div className="message-board">
-      <h3>{selectedRoom}</h3>
-      <div className="message-list">
+      <div className="chat-room-header">
+        <div className="room-info">
+          {isUserOnlineRecently(userStatus.online, userStatus.onlineAt) && <div className="online-status" />}
+          <h5 className="mb-0">{selectedRoom}</h5>
+          {checkUserTyping() && <div className='px-2'>typing</div >}
+        </div>
+      </div>
+      <div className="message-list" ref={messageListRef}>
         {messagesList.length > 0 ? (
           <>
             {messagesList.map(message => (
               <div key={message.id} className={`message ${message.user_id === userData?.id ? 'sent' : 'received'}`}>
                 <span className="message-username">{message.username}</span>
                 <p className="message-content">{message.content}</p>
+                <span className="sent-at-hover">{formattedDateTime(message.created_at)}</span>
               </div>
             ))}
           </>
@@ -220,10 +257,33 @@ const List = ({ userData }) => {
       </div>
     </div>
   );
-  const handleMessageInputChange = (e) => {
-    setMessageField(e.target.value);
-    handleTyping(e.target.value.length > 0)
+  const handleTypingStatus = (status) => {
+    setIsTyping(status);
   };
+
+  const handleKeyDown = () => {
+    handleTypingStatus(true);
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      handleTypingStatus(false);
+    }, 2000);
+  };
+
+  const handleBlur = () => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+    handleTypingStatus(false);
+  };
+
+  useEffect(() => {
+    handleTyping(isTyping)
+  }, [isTyping])
+
 
   return (
     <div className="chat-page">
@@ -254,11 +314,15 @@ const List = ({ userData }) => {
             <MessageListView />
             <div className="message-input">
               <form onSubmit={handleSendMessage}>
-                <input type="text" value={messageField}
-                  onChange={handleMessageInputChange}
-                  onBlur={() => handleTyping(false)}
-                  placeholder="Type a message..." />
-                <button type="submit" disabled={messageField === ''}>Send</button>
+                <input type="text"
+                  value={messageField}
+                  onChange={(e) => setMessageField(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onBlur={handleBlur}
+                  placeholder="Type a message..."
+                  rows="3"
+                />
+                <button type="submit" disabled={messageField.trim() === ''}>Send</button>
               </form>
             </div>
           </>
