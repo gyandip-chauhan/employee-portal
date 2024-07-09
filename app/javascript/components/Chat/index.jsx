@@ -2,10 +2,12 @@ import React, { useEffect, useRef, useState } from 'react';
 import roomsApi from '../common/apis/roomsApi';
 import messagesApi from '../common/apis/messagesApi';
 import ActionCable from 'actioncable';
-import { formattedDateTime } from '../common/helpers/formattedDateTime';
 import { toast } from 'react-toastify';
+import ListView from './ListView';
+import MessageListView from './MessageListView';
+import { UserProvider } from '../contexts/UserContext';
 
-const List = ({ userData }) => {
+const Chat = () => {
   const [roomField, setRoomField] = useState("");
   const [messageField, setMessageField] = useState("");
   const [usersList, setUsersList] = useState([]);
@@ -14,20 +16,59 @@ const List = ({ userData }) => {
   const [selectedRoom, setSelectedRoom] = useState("");
   const [selectedRoomId, setSelectedRoomId] = useState(null);
   const [isPrivate, setIsPrivate] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
   const [params, setParams] = useState({ item: 15 });
   const [userStatus, setUserStatus] = useState({ online: false, onlineAt: null })
   const [selectedUser, setSelectedUser] = useState({ user: 0, for: 0, typing: false })
   const [selectedUserId, setSelectedUserId] = useState(0)
   const [isTyping, setIsTyping] = useState(false)
+  const [broadcast, setBroadcast] = useState({})
+
   const typingTimeoutRef = useRef(null);
-  const messageListRef = useRef(null);
   const queryParams = () => new URLSearchParams(params).toString();
+  const { currentUser } = UserProvider();
 
   useEffect(() => {
+    const initializeChat = async () => {
+      await fetchRooms();
+      setupWebSocket();
+    };
+
+    initializeChat();
+  }, []);
+
+  const fetchRooms = async () => {
+    try {
+      const response = await roomsApi.get();
+      setUsersList(response.data.users.map(user => ({ ...user, unread_messages_count: user.unread_messages_count || 0 })));
+      setRoomsList(response.data.rooms.map(room => ({ ...room, unread_messages_count: room.unread_messages_count || 0 })));
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || `${error}`;
+      toast.error(errorMessage);
+    }
+  };
+
+  const setupWebSocket = () => {
     const cable = ActionCable.createConsumer('/cable');
     const chatChannel = cable.subscriptions.create('MessagesChannel', {
-      received: (data) => {
+      received: (response) => {
+        setBroadcast(response)
+      }
+    });
+
+    return () => {
+      if (chatChannel) {
+        chatChannel.unsubscribe();
+      }
+    };
+  };
+
+  useEffect(() => {
+    broadCastedMessage(broadcast.type, broadcast.data)
+  }, [broadcast]);
+
+  const broadCastedMessage = (type, data) => {
+    switch (type) {
+      case "new_message": {
         const senderName = data.msg_of === 'room' ? roomsList.find(room => room.id === data.sender_id)?.name : usersList.find(user => user.id === data.sender_id)?.username;
         const newMessage = {
           id: data.id,
@@ -43,67 +84,37 @@ const List = ({ userData }) => {
           }
           return room;
         });
-
-        const updatedUsersList = usersList.map(user => {
-          if (user.id === data.sender_id) {
-            return { ...user, unread_messages_count: data.unread_count };
-          }
-          if (user.id === data.user_id && data.typing_for.id === currentUser.id) {
-            return { ...user, is_typing: data.is_typing };
-          }
-          return user;
-        });
-
-        // Update UI with new message and unread count
         setRoomsList(updatedRoomsList);
-        setUsersList(updatedUsersList);
 
         if (data.room_id === selectedRoomId && data.content) {
           setMessagesList(list => [...list, newMessage]);
         }
 
-        const updatedUsersStatus = updatedUsersList.map(user => {
-          if (data.status && user.id === data.user_id) {
-            setUserStatus({ online: data.online, onlineAt: data.online_at })
-            return { ...user, online: data.online, online_at: data.online_at };
-          }
-          return user;
-        });
-        if (currentUser && data.typing_for && currentUser.id === data.typing_for?.id) {
-          setSelectedUser({ user: data.user_id, for: data.typing_for.id, typing: data.is_typing })
-        }
-        setRoomsList(updatedRoomsList);
-        setUsersList(updatedUsersStatus);
-
-        if (data.room_id === selectedRoomId && data.content) {
-          setMessagesList(list => [...list, newMessage]);
-          scrollToBottom();
-        }
         if (data.msg_for === selectedRoomId) {
-
-          // Increment unread count in the chat list
           toast.info('You have new messages');
         }
+        break;
       }
-    });
-    return () => {
-      chatChannel.unsubscribe();
-    };
-  }, [selectedRoomId, roomsList]);
 
-  useEffect(() => {
-    fetchRooms();
-  }, []);
+      case "update_status":
+        setUsersList(prevUsersList => prevUsersList.map(user =>
+          user.id === data.user_id ? { ...user, online: data.online, online_at: data.online_at } : user
+        ));
+        break;
 
-  const fetchRooms = async () => {
-    try {
-      const response = await roomsApi.get();
-      setUsersList(response.data.users.map(user => ({ ...user, unread_messages_count: user.unread_messages_count || 0 })));
-      setRoomsList(response.data.rooms.map(room => ({ ...room, unread_messages_count: room.unread_messages_count || 0 })));
-      setCurrentUser(response.data.current_user);
-    } catch (error) {
+      case "typing":
+        if (currentUser && data.typing_for && currentUser.id === data.typing_for.id) {
+          setSelectedUser({ user: data.user_id, for: data.typing_for.id, typing: data.is_typing });
+        }
+        setUsersList(prevUsersList => prevUsersList.map(user =>
+          user.id === data.user_id && data.typing_for.id === currentUser.id
+            ? { ...user, is_typing: data.is_typing }
+            : user
+        ));
+        break;
 
-      toast.error(error.message);
+      default:
+        break;
     }
   };
 
@@ -112,7 +123,6 @@ const List = ({ userData }) => {
       const response = await messagesApi.getMessages(queryParams());
       setMessagesList(response.data.messages);
       setUserStatus({ online: response.data.user.online, onlineAt: response.data.user.online_at });
-      scrollToBottom();
       setSelectedRoomId(response.data.single_room.id);
 
       // Reset unread count
@@ -128,7 +138,7 @@ const List = ({ userData }) => {
     }
   };
   const handleTyping = (isUserTyping) => {
-    messagesApi.typing({ room_id: selectedRoomId, is_typing: isUserTyping })
+    currentUser && messagesApi.typing({ room_id: selectedRoomId, is_typing: isUserTyping })
   };
 
   const handleRoomCreate = async (event) => {
@@ -147,7 +157,7 @@ const List = ({ userData }) => {
   const handleSendMessage = async (event) => {
     event.preventDefault();
     try {
-      await messagesApi.create({ message: { content: messageField, room_id: selectedRoomId, user_id: userData?.id }, is_private: isPrivate });
+      await messagesApi.create({ message: { content: messageField, room_id: selectedRoomId, user_id: currentUser?.id }, is_private: isPrivate });
       setParams({ ...params, item: 15, reset_unread: true }); // Reset unread count
       fetchMessages();
 
@@ -169,13 +179,12 @@ const List = ({ userData }) => {
       const errorMessage = error.response?.data?.error || `${error}`;
       toast.error(errorMessage);
     }
-    scrollToBottom();
   };
 
   const handleSelected = (id, msgFor, roomName) => {
-    setSelectedRoom(roomName);
     setSelectedRoomId(id);
     setParams({ ...params, id: id, msg_of: msgFor, item: 15, reset_unread: true });
+    setSelectedRoom(roomName);
   };
 
   useEffect(() => {
@@ -190,73 +199,15 @@ const List = ({ userData }) => {
     const diffInMinutes = Math.round((new Date() - new Date(at)) / 60000);
     const diffInSeconds = Math.round((new Date() - new Date(at)) / 1000);
 
-    return diffInSeconds <= 10;
+    return diffInMinutes <= 1;
   }
-
-  const ListView = () => (
-    <div className="user-list max-h-60 overflow-y-auto">
-      {roomsList.map(room => (
-        <div key={room.id} onClick={() => handleSelected(room.id, "room", room.name)} className={`user-item ${selectedRoom === room.name ? 'active' : ''}`}>
-          {room.name}
-          {room.unread_messages_count > 0 && (
-            <span className="badge">({room.unread_messages_count})</span>
-          )}
-        </div>
-      ))}
-      {usersList.map(user => (
-        <div key={user.id} onClick={() => { handleSelected(user.id, "user", user.username); setSelectedUserId(user.id) }} className={`user-item ${selectedRoom === user.username ? 'active' : ''}`}>
-          {user.username}
-          {user.unread_messages_count > 0 && (
-            <span className="badge">({user.unread_messages_count})</span>
-          )}
-          {user.is_typing && <div>typing...</div>}
-        </div>
-      ))}
-    </div>
-  );
-
-  const scrollToBottom = () => {
-    if (messageListRef.current) {
-      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
-    }
-  };
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messagesList]);
 
   const checkUserTyping = () => {
     return selectedUser.user === selectedUserId &&
-      selectedUser.for === currentUser.id &&
+      selectedUser.for === currentUser?.id &&
       selectedUser.typing;
   };
 
-  const MessageListView = () => (
-    <div className="message-board">
-      <div className="chat-room-header">
-        <div className="room-info">
-          {isUserOnlineRecently(userStatus.online, userStatus.onlineAt) && <div className="online-status" />}
-          <h5 className="mb-0">{selectedRoom}</h5>
-          {checkUserTyping() && <div className='px-2'>typing</div >}
-        </div>
-      </div>
-      <div className="message-list" ref={messageListRef}>
-        {messagesList.length > 0 ? (
-          <>
-            {messagesList.map(message => (
-              <div key={message.id} className={`message ${message.user_id === userData?.id ? 'sent' : 'received'}`}>
-                <span className="message-username">{message.username}</span>
-                <p className="message-content">{message.content}</p>
-                <span className="sent-at-hover">{formattedDateTime(message.created_at)}</span>
-              </div>
-            ))}
-          </>
-        ) : (
-          <div className="empty-message">No messages yet. Start the conversation!</div>
-        )}
-      </div>
-    </div>
-  );
   const handleTypingStatus = (status) => {
     setIsTyping(status);
   };
@@ -285,9 +236,13 @@ const List = ({ userData }) => {
   }, [isTyping])
 
 
+  useEffect(() => {
+    setMessageField("")
+  }, [selectedRoomId])
+
   return (
     <div className="chat-page">
-      <div className="sidebar" style={{ backgroundColor: '#128C7E', color: '#FFFFFF' }}>
+      <div className="sidebar">
         <div className="sidebar-header p-3">
           <h1>Chat</h1>
           <form onSubmit={handleRoomCreate}>
@@ -304,14 +259,27 @@ const List = ({ userData }) => {
           </form>
         </div>
         <div className="sidebar-body">
-          <ListView />
+          <ListView
+            roomsList={roomsList}
+            selectedRoom={selectedRoom}
+            usersList={usersList}
+            handleSelected={handleSelected}
+            setSelectedUserId={setSelectedUserId}
+            isUserOnlineRecently={isUserOnlineRecently}
+          />
         </div>
       </div>
 
       <div className="main-content">
         {selectedRoom ? (
           <>
-            <MessageListView />
+            <MessageListView
+              isUserOnlineRecently={isUserOnlineRecently}
+              checkUserTyping={checkUserTyping}
+              userStatus={userStatus}
+              selectedRoom={selectedRoom}
+              messagesList={messagesList}
+            />
             <div className="message-input">
               <form onSubmit={handleSendMessage}>
                 <input type="text"
@@ -339,4 +307,4 @@ const List = ({ userData }) => {
   );
 };
 
-export default List;
+export default Chat;
