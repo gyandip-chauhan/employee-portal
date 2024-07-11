@@ -27,9 +27,7 @@ const ListView = ({ roomsList, selectedRoom, usersList, handleSelected, setSelec
             className={`user-item ${selectedRoom === user.username ? "active" : ""}`}
           >
             <div className="user-name">
-              <div class="nav-item d-flex align-items-center">
-                {/* {user.username} */}
-
+              <div className="nav-item d-flex align-items-center">
                 <Avatar>{getInitials(user.username)}</Avatar>
                 <span className="ms-2 user-name">{user.username}</span>
 

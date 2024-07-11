@@ -6,7 +6,7 @@ module Api::V1
     def index
       @messages = @room.messages.last(params[:item] || 20).map(&:serialize)
       reset_unread_count if params[:reset_unread]
-      render json: { single_room: @room.serialize, messages: @messages, user: message_for}, status: :ok
+      render json: { single_room: @room.serialize, messages: @messages, count: @room.messages.count, user: message_for}, status: :ok
     end
 
     def create

@@ -1,10 +1,13 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { chatFormattedDateTime } from '../common/helpers/chatFormattedDateTime.jsx';
 import { UserProvider } from '../contexts/UserContext';
 
-const MessageListView = ({ isUserOnlineRecently, checkUserTyping, userStatus, selectedRoom, messagesList, }) => {
+const MessageListView = ({ isUserOnlineRecently, checkUserTyping, userStatus, selectedRoom, messagesList, setParams, params, msgCount }) => {
   const messageListRef = useRef(null);
   const { currentUser } = UserProvider();
+  const itemCounter = 25
+  const [pageItemCount, setPageItemCount] = useState(params.item);
+  const [previousScrollTop, setPreviousScrollTop] = useState(0);
 
   const scrollToBottom = () => {
     if (messageListRef.current) {
@@ -12,9 +15,39 @@ const MessageListView = ({ isUserOnlineRecently, checkUserTyping, userStatus, se
     }
   };
 
+  const scrollToInBetween = () => {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight - previousScrollTop
+    }
+  };
+
   useEffect(() => {
-    scrollToBottom()
+    if (pageItemCount === params.item) scrollToBottom()
+    if (pageItemCount !== params.item) scrollToInBetween()
   }, [messagesList]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (messageListRef.current.scrollTop <= 1) {
+        setPreviousScrollTop(messageListRef.current.scrollHeight - messageListRef.current.scrollTop);
+        loadPreviousMessages();
+      }
+    };
+
+    if (messageListRef.current) {
+      messageListRef.current.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (messageListRef.current) {
+        messageListRef.current.removeEventListener("scroll", handleScroll);
+      }
+    };
+  });
+
+  const loadPreviousMessages = () => {
+    params.item < msgCount && setParams(prev => ({ ...prev, item: prev.item + itemCounter }))
+  };
 
   return (
     <div className="message-board">
@@ -31,7 +64,7 @@ const MessageListView = ({ isUserOnlineRecently, checkUserTyping, userStatus, se
         )}
       </div>
       <div className="message-list" ref={messageListRef}>
-        {messagesList.length > 0 ? (
+        {messagesList.length ? (
           <>
             {messagesList.map(message => (
               <div key={message.id} className={`message ${message.user_id === currentUser?.id ? 'sent' : 'received'}`}>

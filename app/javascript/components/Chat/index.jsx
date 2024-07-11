@@ -22,6 +22,7 @@ const Chat = () => {
   const [selectedUserId, setSelectedUserId] = useState(0)
   const [isTyping, setIsTyping] = useState(false)
   const [broadcast, setBroadcast] = useState({})
+  const [msgCount, setMsgCount] = useState(0)
 
   const typingTimeoutRef = useRef(null);
   const queryParams = () => new URLSearchParams(params).toString();
@@ -124,6 +125,7 @@ const Chat = () => {
       setMessagesList(response.data.messages);
       setUserStatus({ online: response.data.user.online, onlineAt: response.data.user.online_at });
       setSelectedRoomId(response.data.single_room.id);
+      setMsgCount(response.data.count)
 
       // Reset unread count
       setRoomsList(roomsList.map(room => {
@@ -279,6 +281,9 @@ const Chat = () => {
               userStatus={userStatus}
               selectedRoom={selectedRoom}
               messagesList={messagesList}
+              setParams={setParams}
+              params={params}
+              msgCount={msgCount}
             />
             <div className="message-input">
               <form onSubmit={handleSendMessage}>
