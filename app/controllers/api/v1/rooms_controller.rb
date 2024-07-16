@@ -1,6 +1,7 @@
 module Api::V1
   class RoomsController < ApplicationController
     include ActiveUser
+    before_action :authenticate_user!
     
     def index
       room = Room.new
