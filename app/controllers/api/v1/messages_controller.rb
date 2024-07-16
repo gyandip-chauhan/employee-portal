@@ -1,11 +1,12 @@
 module Api::V1
   class MessagesController < ApplicationController
+    include ActiveUser
     before_action :find_room, only: [:index, :create]
 
     def index
       @messages = @room.messages.last(params[:item] || 20).map(&:serialize)
       reset_unread_count if params[:reset_unread]
-      render json: { single_room: @room.serialize, messages: @messages }, status: :ok
+      render json: { single_room: @room.serialize, messages: @messages, count: @room.messages.count, user: message_for}, status: :ok
     end
 
     def create
@@ -18,7 +19,8 @@ module Api::V1
         serialized_message[:msg_of] = sender_type
         serialized_message[:msg_for] = Participant.other_user(current_user, @message.room_id)&.user_id || nil
 
-        ActionCable.server.broadcast('MessagesChannel', serialized_message.merge(unread_count: @message.room.participants.sum(:unread_messages_count)))
+        ActionCable.server.broadcast('MessagesChannel', { type: "new_message", data: serialized_message.merge(unread_count: @message.room.participants.sum(:unread_messages_count))
+          })
         render json: @message, status: :created
       else
         render json: @message.errors, status: :unprocessable_entity
@@ -28,8 +30,8 @@ module Api::V1
     def typing
       @participant = Participant.find_by(user_id: current_user.id, room_id: params[:room_id])
       @participant.update(is_typing: params[:is_typing])
-      ActionCable.server.broadcast("MessagesChannel", { room_id: params[:room_id], user_id: current_user.id, is_typing: params[:is_typing], 
-       typing_for: Participant.other_user(current_user, params[:room_id])&.user.serialize
+      ActionCable.server.broadcast("MessagesChannel", { type: "typing", data: {room_id: params[:room_id], user_id: current_user.id, is_typing: params[:is_typing], 
+       typing_for: Participant.other_user(current_user, params[:room_id])&.user.serialize}
     })
       head :ok
     end
@@ -54,6 +56,10 @@ module Api::V1
     def get_name(user1, user2)
       users = [user1, user2].sort
       "private_#{users[0].id}_#{users[1].id}"
+    end
+
+    def message_for
+      Participant.other_user(current_user.id, find_room)&.user
     end
 
     def message_params

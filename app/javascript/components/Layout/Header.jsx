@@ -39,7 +39,7 @@ const Header = ({ userData, setUserData, setDepartmentId }) => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-light bg-primary sticky-top">
+    <nav className="navbar navbar-expand-lg navbar-light bg-header sticky-top">
       <div className="container">
         <Link className="navbar-brand text-light" to="/">Employee Directory</Link>
         <button
