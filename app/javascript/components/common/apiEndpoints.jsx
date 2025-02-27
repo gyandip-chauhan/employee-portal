@@ -10,9 +10,12 @@ export const API_ATTENDANCES = '/attendances';
 export const API_REMOTE_CLOCK_IN = '/remote_clock_in';
 export const API_REMOTE_CLOCK_OUT = '/remote_clock_out';
 
-export const CABLE_URL = 'ws://192.168.31.231:3000/cable'
+export const CABLE_URL = 'ws://192.168.30.28:3000/cable'
 export const API_SEND_MESSAGE = '/messages'
 export const API_ALL_MESSAGES = '/messages'
+
+export const API_PDF_SIGN = '/pdfs/sign'
+export const API_PDF_STAMP = '/pdfs/stamp'
 
 export const API_TEAM_SUMMARY = (id) => `/teams/${id}`
 

@@ -1,6 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    Ascii85 (2.0.1)
     actioncable (7.1.3.2)
       actionpack (= 7.1.3.2)
       activesupport (= 7.1.3.2)
@@ -83,16 +84,21 @@ GEM
       kaminari (~> 1.2.2)
       sassc-rails (~> 2.1)
       selectize-rails (~> 0.6)
+    afm (0.2.2)
     apnotic (1.7.2)
       connection_pool (~> 2)
       net-http2 (>= 0.18.3, < 2)
     base64 (0.2.0)
     bcrypt (3.1.20)
+    benchmark (0.4.0)
     bigdecimal (3.1.7)
     bindex (0.8.1)
     bootsnap (1.18.3)
       msgpack (~> 1.2)
     builder (3.2.4)
+    combine_pdf (1.0.29)
+      matrix
+      ruby-rc4 (>= 0.1.5)
     concurrent-ruby (1.2.3)
     connection_pool (2.4.1)
     crass (1.0.6)
@@ -120,6 +126,7 @@ GEM
       raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    hashery (2.1.2)
     http-2 (0.11.0)
     i18n (1.14.4)
       concurrent-ruby (~> 1.0)
@@ -148,6 +155,7 @@ GEM
       activerecord
       kaminari-core (= 1.2.2)
     kaminari-core (1.2.2)
+    logger (1.6.6)
     loofah (2.22.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
@@ -157,6 +165,10 @@ GEM
       net-pop
       net-smtp
     marcel (1.0.4)
+    matrix (0.4.2)
+    mini_magick (5.2.0)
+      benchmark
+      logger
     mini_mime (1.1.5)
     minitest (5.22.3)
     msgpack (1.7.2)
@@ -185,7 +197,25 @@ GEM
       racc (~> 1.4)
     nokogiri (1.16.4-x86_64-linux)
       racc (~> 1.4)
+    pdf-core (0.10.0)
+    pdf-master (0.1.2)
+      mini_magick
+      prawn
+      prawn-templates
+    pdf-reader (2.14.1)
+      Ascii85 (>= 1.0, < 3.0, != 2.0.0)
+      afm (~> 0.2.1)
+      hashery (~> 2.0)
+      ruby-rc4
+      ttfunk
     pg (1.5.6)
+    prawn (2.5.0)
+      matrix (~> 0.4)
+      pdf-core (~> 0.10.0)
+      ttfunk (~> 1.8)
+    prawn-templates (0.1.2)
+      pdf-reader (~> 2.0)
+      prawn (~> 2.2)
     psych (5.1.2)
       stringio
     puma (6.4.2)
@@ -241,6 +271,7 @@ GEM
     reline (0.5.4)
       io-console (~> 0.5)
     rolify (6.0.1)
+    ruby-rc4 (0.1.5)
     sassc (2.4.0)
       ffi (~> 1.9)
     sassc-rails (2.1.2)
@@ -272,6 +303,8 @@ GEM
     thor (1.3.1)
     tilt (2.3.0)
     timeout (0.4.1)
+    ttfunk (1.8.0)
+      bigdecimal (~> 3.1)
     turbo-rails (2.0.5)
       actionpack (>= 6.0.0)
       activejob (>= 6.0.0)
@@ -302,6 +335,7 @@ DEPENDENCIES
   apnotic
   bcrypt (~> 3.1.7)
   bootsnap
+  combine_pdf
   cssbundling-rails
   debug
   discard
@@ -309,7 +343,9 @@ DEPENDENCIES
   fast_jsonapi
   jbuilder
   jsbundling-rails
+  pdf-master (~> 0.1.2)
   pg (~> 1.1)
+  prawn
   puma (>= 5.0)
   rack-cors
   rails (~> 7.1.3, >= 7.1.3.2)

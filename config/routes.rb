@@ -48,6 +48,8 @@ Rails.application.routes.draw do
       end
       resources :rooms, only: [:index, :create, :show]
       resources :teams, only: [:index, :show]
+      post 'pdfs/sign', to: 'pdfs#add_signature'
+      post 'pdfs/stamp', to: 'pdfs#add_stamp'
     end
   end
   root 'homepage#index'

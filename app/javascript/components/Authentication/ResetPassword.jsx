@@ -5,16 +5,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
 const ResetPassword = () => {
+  const userLocation = useLocation();
+  const navigate = useNavigate();
+
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [error, setError] = useState('');
-  const searchParams = new URLSearchParams(location.search);
+  const searchParams = new URLSearchParams(userLocation.search);
   const resetToken = searchParams.get('token');
   const isNewUser = searchParams.get('new');
   const label = isNewUser ? "Set" : "Reset"
 
-  const location = useLocation();
-  const navigate = useNavigate();
 
   const handleNewPasswordChange = (e) => {
     setNewPassword(e.target.value);

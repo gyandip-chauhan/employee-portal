@@ -1,8 +1,7 @@
 // src/services/apiService.tsx
 import axios from 'axios';
 
-const baseURL = 'http://192.168.31.231:3000/api/v1';
-// const baseURL = 'http://0.0.0.0:3000/api/v1';
+const baseURL = 'http://192.168.30.28:3000/api/v1';
 
 const ApiService = axios.create({
   baseURL,

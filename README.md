@@ -65,21 +65,21 @@ Set your system ip address to the following files
 /app/javascript/components/common/apiService.jsx
 ```
 ```
-const baseURL = 'http://192.168.31.231:3000/api/v1';
+const baseURL = 'http://0.0.0.0:3000/api/v1';
 ```
 
 ```
 /app/javascript/components/common/apiEndpoints.jsx
 ```
 ```
-export const CABLE_URL = 'ws://192.168.31.231:3000/cable'
+export const CABLE_URL = 'ws://0.0.0.0:3000/cable'
 ```
 
 ```
 /Procfile.dev
 ```
 ```
-web: env RUBY_DEBUG_OPEN=true bin/rails s -b 192.168.31.231 -p 3000
+web: env RUBY_DEBUG_OPEN=true bin/rails s -b 0.0.0.0 -p 3000
 ```
 
 9. Run app in local env

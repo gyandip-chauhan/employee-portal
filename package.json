@@ -14,7 +14,7 @@
     "@popperjs/core": "^2.11.8",
     "actioncable": "^5.2.8-1",
     "autoprefixer": "^10.4.19",
-    "axios": "^1.6.8",
+    "axios": "^1.8.1",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "esbuild": "^0.20.2",

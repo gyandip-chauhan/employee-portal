@@ -243,72 +243,76 @@ const Chat = () => {
   }, [selectedRoomId])
 
   return (
-    <div className="chat-page">
-      <div className="sidebar">
-        <div className="sidebar-header p-3">
-          <h1>Chat</h1>
-          <form onSubmit={handleRoomCreate}>
-            <div className="input-group mb-3">
-              <input
-                type="text"
-                className="form-control"
-                value={roomField}
-                onChange={(e) => setRoomField(e.target.value)}
-                placeholder="Create a room"
-              />
-              <button type="submit" className="btn btn-light">Create</button>
-            </div>
-          </form>
-        </div>
-        <div className="sidebar-body">
-          <ListView
-            roomsList={roomsList}
-            selectedRoom={selectedRoom}
-            usersList={usersList}
-            handleSelected={handleSelected}
-            setSelectedUserId={setSelectedUserId}
-            isUserOnlineRecently={isUserOnlineRecently}
-          />
-        </div>
-      </div>
-
-      <div className="main-content">
-        {selectedRoom ? (
-          <>
-            <MessageListView
-              isUserOnlineRecently={isUserOnlineRecently}
-              checkUserTyping={checkUserTyping}
-              userStatus={userStatus}
-              selectedRoom={selectedRoom}
-              messagesList={messagesList}
-              setParams={setParams}
-              params={params}
-              msgCount={msgCount}
-            />
-            <div className="message-input">
-              <form onSubmit={handleSendMessage}>
-                <input type="text"
-                  value={messageField}
-                  onChange={(e) => setMessageField(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onBlur={handleBlur}
-                  placeholder="Type a message..."
-                  rows="3"
-                />
-                <button type="submit" disabled={messageField.trim() === ''}>Send</button>
+    <main className="d-flex flex-column flex-grow-1">
+      <div className="container-fluid my-3">
+        <div className="chat-page">
+          <div className="sidebar">
+            <div className="sidebar-header p-3">
+              <h1>Chat</h1>
+              <form onSubmit={handleRoomCreate}>
+                <div className="input-group mb-3">
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={roomField}
+                    onChange={(e) => setRoomField(e.target.value)}
+                    placeholder="Create a room"
+                  />
+                  <button type="submit" className="btn btn-light">Create</button>
+                </div>
               </form>
             </div>
-          </>
-        ) : (
-          <div className="message-board">
-            <div className="default-view text-center">
-              <h1>Welcome to ChatApp</h1>
-              <p>Select a room to start chatting.</p>
+            <div className="sidebar-body">
+              <ListView
+                roomsList={roomsList}
+                selectedRoom={selectedRoom}
+                usersList={usersList}
+                handleSelected={handleSelected}
+                setSelectedUserId={setSelectedUserId}
+                isUserOnlineRecently={isUserOnlineRecently}
+              />
             </div>
           </div>
-        )}
+
+          <div className="main-content">
+            {selectedRoom ? (
+              <>
+                <MessageListView
+                  isUserOnlineRecently={isUserOnlineRecently}
+                  checkUserTyping={checkUserTyping}
+                  userStatus={userStatus}
+                  selectedRoom={selectedRoom}
+                  messagesList={messagesList}
+                  setParams={setParams}
+                  params={params}
+                  msgCount={msgCount}
+                />
+                <div className="message-input">
+                  <form onSubmit={handleSendMessage}>
+                    <input type="text"
+                      value={messageField}
+                      onChange={(e) => setMessageField(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      onBlur={handleBlur}
+                      placeholder="Type a message..."
+                      rows="3"
+                    />
+                    <button type="submit" disabled={messageField.trim() === ''}>Send</button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <div className="message-board">
+                <div className="default-view text-center">
+                  <h1>Welcome to ChatApp</h1>
+                  <p>Select a room to start chatting.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
+    </main>
   );
 };
 

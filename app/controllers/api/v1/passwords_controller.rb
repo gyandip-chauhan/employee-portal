@@ -20,7 +20,7 @@ module Api::V1
       :password,
       :password_confirmation,
       :password_challenge
-      ).with_defaults(password _challenge: "")
+      ).with_defaults(password_challenge: "")
     end
   end
 end
