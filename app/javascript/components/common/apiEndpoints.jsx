@@ -1,4 +1,3 @@
-// src/services/apiEndpoints.tsx
 export const API_LOGIN = '/login';
 export const API_SIGNUP = '/signup';
 export const API_LOGOUT = '/logout';
@@ -10,12 +9,19 @@ export const API_ATTENDANCES = '/attendances';
 export const API_REMOTE_CLOCK_IN = '/remote_clock_in';
 export const API_REMOTE_CLOCK_OUT = '/remote_clock_out';
 
-export const CABLE_URL = 'ws://192.168.30.28:3000/cable'
+export const CABLE_URL = 'ws://192.168.30.26:3000/cable'
 export const API_SEND_MESSAGE = '/messages'
 export const API_ALL_MESSAGES = '/messages'
 
-export const API_PDF_SIGN = '/pdfs/sign'
-export const API_PDF_STAMP = '/pdfs/stamp'
+export const API_PDF_ADD_TEXT = '/pdfs/add_text';
+export const API_PDF_ADD_IMAGE = '/pdfs/add_image';
+export const API_PDF_DELETE_PAGE = '/pdfs/delete_page';
+export const API_PDF_ADD_ANNOTATION = '/pdfs/add_annotation';
+export const API_PDF_ADD_FORM_FIELD = '/pdfs/add_form_field';
+export const API_PDF_ADD_WATERMARK = '/pdfs/add_watermark';
+export const API_PDF_ENCRYPT = '/pdfs/encrypt';
+export const API_PDF_MERGE = '/pdfs/merge';
+export const API_PDF_SPLIT = '/pdfs/split';
 
 export const API_TEAM_SUMMARY = (id) => `/teams/${id}`
 

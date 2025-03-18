@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { chatFormattedDateTime } from '../common/helpers/chatFormattedDateTime.jsx';
-import { UserProvider } from '../contexts/UserContext';
+import UserProvider, { UserContext } from "../../contexts/UserContext";
 
 const MessageListView = ({ isUserOnlineRecently, checkUserTyping, userStatus, selectedRoom, messagesList, setParams, params, msgCount }) => {
   const messageListRef = useRef(null);
-  const { currentUser } = UserProvider();
+  const { currentUser } = useContext(UserContext);
   const itemCounter = 25
   const [pageItemCount, setPageItemCount] = useState(params.item);
   const [previousScrollTop, setPreviousScrollTop] = useState(0);

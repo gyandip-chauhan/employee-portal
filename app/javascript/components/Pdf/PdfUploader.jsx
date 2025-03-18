@@ -1,15 +1,53 @@
 import React, { useState } from "react";
-import { Box, Grid, Card, CardContent, Button, TextField, Typography, Select, MenuItem } from "@mui/material";
-import ApiService from "../common/apiService";
-import { API_PDF_SIGN, API_PDF_STAMP } from "../common/apiEndpoints";
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Button,
+  TextField,
+  Typography,
+  Input,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import { toast } from "react-toastify";
+import ApiService from "../common/apiService";
+import {
+  API_PDF_ADD_TEXT,
+  API_PDF_ADD_IMAGE,
+  API_PDF_DELETE_PAGE,
+  API_PDF_ADD_ANNOTATION,
+  API_PDF_ADD_FORM_FIELD,
+  API_PDF_ADD_WATERMARK,
+  API_PDF_ENCRYPT,
+  API_PDF_MERGE,
+  API_PDF_SPLIT
+} from "../common/apiEndpoints";
+
+const positions = [
+  { label: "Top-Left", value: "top_left" },
+  { label: "Top-Right", value: "top_right" },
+  { label: "Bottom-Left", value: "bottom_left" },
+  { label: "Bottom-Right", value: "bottom_right" },
+  { label: "Center", value: "center" },
+  { label: "Manual", value: "manual" },
+];
 
 const PdfUploader = () => {
   const [pdf, setPdf] = useState(null);
-  const [signature, setSignature] = useState(null);
-  const [stampText, setStampText] = useState("");
+  const [additionalPdf, setAdditionalPdf] = useState(null);
+  const [image, setImage] = useState(null);
+  const [text, setText] = useState("");
+  const [annotation, setAnnotation] = useState("");
+  const [formField, setFormField] = useState("");
+  const [watermark, setWatermark] = useState("");
+  const [password, setPassword] = useState("");
+  const [page, setPage] = useState("");
+  const [position, setPosition] = useState("top_left");
+  const [x, setX] = useState("");
+  const [y, setY] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
-  const [coordinates, setCoordinates] = useState({ x: "", y: "", page: 1, position: "" });
 
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
@@ -19,122 +57,119 @@ const PdfUploader = () => {
       toast.error("Please upload a valid PDF file.");
       return;
     }
-    if (type === "signature" && !file.type.startsWith("image/")) {
+    if (type === "image" && !file.type.startsWith("image/")) {
       toast.error("Please upload a valid image file.");
       return;
     }
-    type === "pdf" ? setPdf(file) : setSignature(file);
+    type === "pdf" ? setPdf(file) : setImage(file);
   };
-
-  const handleInputChange = (e) => setCoordinates({ ...coordinates, [e.target.name]: e.target.value });
 
   const uploadData = async (url, formData) => {
     try {
-      const response = await ApiService.post(url, formData, { headers: { "Content-Type": "multipart/form-data" } });
-      setPreviewUrl(response.data.url);
+      const response = await ApiService.post(url, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      setPreviewUrl(response.data.url || response.data.files?.[0]);
       toast.success(response.data.message);
     } catch (error) {
       toast.error(error.response?.data?.error || "Upload failed.");
     }
   };
 
-  const uploadSignature = async () => {
-    if (!pdf || !signature) return toast.error("Please select a PDF and signature.");
-    if (!coordinates.position && (!coordinates.x || !coordinates.y)) return toast.error("Provide coordinates or select a position.");
+  const handleAction = async (url, fields = []) => {
+    if (!pdf) return toast.error("Please upload a PDF first.");
     
     const formData = new FormData();
     formData.append("pdf", pdf);
-    formData.append("signature", signature);
-    formData.append("page", coordinates.page);
-    formData.append("position", coordinates.position);
     
-    if (!coordinates.position) {
-      formData.append("x", coordinates.x);
-      formData.append("y", coordinates.y);
+    if (url === API_PDF_MERGE) {
+      if (!additionalPdf) return toast.error("Please upload an additional PDF to merge.");
+      formData.append("pdf2", additionalPdf);
     }
-
-    uploadData(API_PDF_SIGN, formData);
-  };
-
-  const uploadStamp = async () => {
-    if (!pdf || !stampText) return toast.error("Please select a PDF and enter stamp text.");
-    if (!coordinates.position && (!coordinates.x || !coordinates.y)) return toast.error("Provide coordinates or select a position.");
-
-    const formData = new FormData();
-    formData.append("pdf", pdf);
-    formData.append("text", stampText);
-    formData.append("page", coordinates.page);
-    formData.append("position", coordinates.position);
-    
-    if (!coordinates.position) {
-      formData.append("x", coordinates.x);
-      formData.append("y", coordinates.y);
+  
+    if (page) formData.append("page", page);
+    formData.append("position", position);
+  
+    if (position === "manual") {
+      formData.append("x", x);
+      formData.append("y", y);
     }
-
-    uploadData(API_PDF_STAMP, formData);
-  };
+  
+    fields.forEach(([key, value]) => {
+      if (value) formData.append(key, value);
+    });
+  
+    uploadData(url, formData);
+  };  
 
   return (
-    <Box sx={{ height: "calc(100vh - 120px)", width: "100vw", overflow: "hidden", display: "flex", justifyContent: "center", alignItems: "center", p: 2 }}>
-      <Grid container spacing={2} sx={{ height: "100%" }}>
-        <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column" }}>
-          <Card sx={{ flex: 1, overflow: "auto" }}>
-            <CardContent>
-              <Typography variant="h6">Upload PDF</Typography>
-              <TextField type="file" accept="application/pdf" onChange={(e) => handleFileChange(e, "pdf")} fullWidth />
-              
-              <Typography variant="h6" sx={{ mt: 2 }}>Upload Signature</Typography>
-              <TextField type="file" accept="image/*" onChange={(e) => handleFileChange(e, "signature")} fullWidth />
-              
-              <Typography variant="h6" sx={{ mt: 2 }}>Stamp Text</Typography>
-              <TextField type="text" value={stampText} onChange={(e) => setStampText(e.target.value)} fullWidth />
-              
-              <Typography variant="h6" sx={{ mt: 2 }}>Select Page</Typography>
-              <TextField type="number" name="page" value={coordinates.page} onChange={handleInputChange} fullWidth />
-              
-              <Typography variant="h6" sx={{ mt: 2 }}>Position</Typography>
-              <Select name="position" value={coordinates.position} onChange={handleInputChange} fullWidth>
-                <MenuItem value="">Manual</MenuItem>
-                <MenuItem value="top_right">Top Right</MenuItem>
-                <MenuItem value="top_left">Top Left</MenuItem>
-                <MenuItem value="center">Center</MenuItem>
-                <MenuItem value="bottom_right">Bottom Right</MenuItem>
-                <MenuItem value="bottom_left">Bottom Left</MenuItem>
+    <Box sx={{ p: 3, display: "flex", gap: 3 }}>
+      {/* Tools Section */}
+      <Card sx={{ flex: 1 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Tools
+          </Typography>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Input type="file" accept="application/pdf" onChange={(e) => handleFileChange(e, "pdf")} fullWidth />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField label="Page Number" fullWidth type="number" onChange={(e) => setPage(e.target.value)} />
+            </Grid>
+            <Grid item xs={6}>
+              <Select fullWidth value={position} onChange={(e) => setPosition(e.target.value)}>
+                {positions.map((pos) => (
+                  <MenuItem key={pos.value} value={pos.value}>
+                    {pos.label}
+                  </MenuItem>
+                ))}
               </Select>
-              
-              {!coordinates.position && (
-                <>
-                  <Typography variant="h6" sx={{ mt: 2 }}>Manual Coordinates</Typography>
-                  <TextField type="number" name="x" label="X Coordinate" value={coordinates.x} onChange={handleInputChange} fullWidth />
-                  <TextField type="number" name="y" label="Y Coordinate" value={coordinates.y} onChange={handleInputChange} fullWidth sx={{ mt: 1 }} />
-                </>
-              )}
-              
-              <Button onClick={uploadSignature} variant="contained" fullWidth sx={{ mt: 2 }}>Add Signature</Button>
-              <Button onClick={uploadStamp} variant="contained" fullWidth sx={{ mt: 2, backgroundColor: "green" }}>Add Stamp</Button>
-            </CardContent>
-          </Card>
-        </Grid>
+            </Grid>
+            {position === "manual" && (
+              <>
+                <Grid item xs={6}>
+                  <TextField label="X Coordinate" type="number" fullWidth onChange={(e) => setX(e.target.value)} />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField label="Y Coordinate" type="number" fullWidth onChange={(e) => setY(e.target.value)} />
+                </Grid>
+              </>
+            )}
+            <Grid item xs={12}>
+              <Input type="file" accept="application/pdf" fullWidth onChange={(e) => setAdditionalPdf(e.target.files[0])} />
+            </Grid>
 
-        <Grid item xs={12} md={8} sx={{ display: "flex", flexDirection: "column" }}>
-          <Card sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-            <CardContent sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
-              <Typography variant="h6">Preview</Typography>
-                {previewUrl ? (<>
-                    <Box sx={{ flex: 1, overflow: "hidden" }}>
-                      <iframe src={previewUrl} width="100%" height="100%" style={{ border: "none" }} title="PDF Preview"></iframe>
-                    </Box>
-                    <Button variant="contained" fullWidth sx={{ mt: 2 }} onClick={() => window.open(previewUrl, "_blank")}>
-                      Open in New Tab
-                    </Button>
-                  </>
-                ) :  (
-                  <Typography variant="body1" color="textSecondary">No preview available</Typography>
-                )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            <Grid item xs={6}>
+              <Button fullWidth variant="contained" onClick={() => handleAction(API_PDF_MERGE)}>
+                Merge PDFs
+              </Button>
+            </Grid>
+
+            <Grid item xs={6}>
+              <Button fullWidth variant="contained" onClick={() => handleAction(API_PDF_SPLIT)}>
+                Split PDF
+              </Button>
+            </Grid>
+            <Grid item xs={6}><Button fullWidth variant="contained" onClick={() => handleAction(API_PDF_DELETE_PAGE)}>Delete Page</Button></Grid>
+            <Grid item xs={6}><TextField label="Password" type="password" fullWidth onChange={(e) => setPassword(e.target.value)} /><Button fullWidth variant="contained" onClick={() => handleAction(API_PDF_ENCRYPT, [["password", password]])}>Encrypt PDF</Button></Grid>
+            <Grid item xs={6}><TextField label="Text" fullWidth onChange={(e) => setText(e.target.value)} /><Button fullWidth variant="contained" sx={{ mt: 1 }} onClick={() => handleAction(API_PDF_ADD_TEXT, [["text", text]])}>Add Text</Button></Grid>
+            <Grid item xs={6}><Input type="file" accept="image/*" fullWidth onChange={(e) => handleFileChange(e, "image")} /><Button fullWidth variant="contained" sx={{ mt: 1 }} onClick={() => handleAction(API_PDF_ADD_IMAGE, [["image", image]])}>Add Image</Button></Grid>
+            <Grid item xs={6}><TextField label="Annotation" fullWidth onChange={(e) => setAnnotation(e.target.value)} /><Button fullWidth variant="contained" sx={{ mt: 1 }} onClick={() => handleAction(API_PDF_ADD_ANNOTATION, [["annotation", annotation]])}>Add Annotation</Button></Grid>
+            <Grid item xs={6}><TextField label="Watermark" fullWidth onChange={(e) => setWatermark(e.target.value)} /><Button fullWidth variant="contained" sx={{ mt: 1 }} onClick={() => handleAction(API_PDF_ADD_WATERMARK, [["watermark", watermark]])}>Add Watermark</Button></Grid>
+          </Grid>
+        </CardContent>
+      </Card>
+      
+      {/* Preview Section */}
+      {previewUrl && (
+        <Card sx={{ flex: 1 }}>
+          <CardContent>
+            <Typography variant="h6">PDF Preview</Typography>
+            <iframe src={previewUrl} width="100%" height="500px" title="PDF Preview"></iframe>
+          </CardContent>
+        </Card>
+      )}
     </Box>
   );
 };

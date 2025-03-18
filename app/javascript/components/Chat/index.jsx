@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import roomsApi from '../common/apis/roomsApi';
 import messagesApi from '../common/apis/messagesApi';
 import ActionCable from 'actioncable';
 import { toast } from 'react-toastify';
 import ListView from './ListView';
 import MessageListView from './MessageListView';
-import { UserProvider } from '../contexts/UserContext';
+import UserProvider, { UserContext } from "../../contexts/UserContext";
 
 const Chat = () => {
   const [roomField, setRoomField] = useState("");
@@ -26,7 +26,7 @@ const Chat = () => {
 
   const typingTimeoutRef = useRef(null);
   const queryParams = () => new URLSearchParams(params).toString();
-  const { currentUser } = UserProvider();
+  const { currentUser } = useContext(UserContext);
 
   useEffect(() => {
     const initializeChat = async () => {

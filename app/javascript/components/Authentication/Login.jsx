@@ -1,40 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import * as Yup from 'yup';
+import { toast } from 'react-toastify';
 import ApiService from '../common/apiService';
 import { API_LOGIN } from '../common/apiEndpoints';
-import { toast } from 'react-toastify';
+import { UserContext } from '../../contexts/UserContext'; // ✅ Import UserContext
 
-const Login = ({ setUserData, setDepartmentId }) => {
+const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const { setCurrentUser, setDepartmentId } = useContext(UserContext); // ✅ Get from context
   const navigate = useNavigate();
-
-  const handleEmailChange = (e) => {
-    setEmail(e.target.value);
-  };
-
-  const handlePasswordChange = (e) => {
-    setPassword(e.target.value);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       const response = await ApiService.post(API_LOGIN, { email, password });
-      localStorage.setItem('userData', JSON.stringify(response.data.user));
-      setUserData(response.data.user);
-      setDepartmentId(response.data.user.department_id)
+      const userData = response.data.user;
+
+      localStorage.setItem('userData', JSON.stringify(userData));
+      setCurrentUser(userData);
+      setDepartmentId(userData.department_id);
+
       navigate('/');
-      toast.success(`${response.data.notice}`);
+      toast.success(response.data.notice);
     } catch (error) {
-      const err = error;
-      if (err.response && err.response.data && err.response.data.error) {
-        toast.error(err.response.data.error);
+      if (error.response?.data?.error) {
+        toast.error(error.response.data.error);
       } else {
-        toast.error(`${err}`);
+        toast.error("An error occurred. Please try again.");
       }
     }
   };
@@ -55,7 +49,8 @@ const Login = ({ setUserData, setDepartmentId }) => {
                     id="email"
                     placeholder="Enter email"
                     value={email}
-                    onChange={handleEmailChange}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                   />
                 </div>
 
@@ -67,11 +62,11 @@ const Login = ({ setUserData, setDepartmentId }) => {
                     id="password"
                     placeholder="Password"
                     value={password}
-                    onChange={handlePasswordChange}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
                   />
                 </div>
 
-                {error && <div className="alert alert-danger">{error}</div>}
                 <div className="mb-3">
                   <Link to="/forgot-password" className="text-sm text-primary">
                     Forgot your password?

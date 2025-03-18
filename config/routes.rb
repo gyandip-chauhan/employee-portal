@@ -48,8 +48,15 @@ Rails.application.routes.draw do
       end
       resources :rooms, only: [:index, :create, :show]
       resources :teams, only: [:index, :show]
-      post 'pdfs/sign', to: 'pdfs#add_signature'
-      post 'pdfs/stamp', to: 'pdfs#add_stamp'
+      post 'pdfs/add_text', to: 'pdfs#add_text'
+      post 'pdfs/add_image', to: 'pdfs#add_image'
+      post 'pdfs/delete_page', to: 'pdfs#delete_page'
+      post 'pdfs/add_annotation', to: 'pdfs#add_annotation'
+      post 'pdfs/add_form_field', to: 'pdfs#add_form_field'
+      post 'pdfs/add_watermark', to: 'pdfs#add_watermark'
+      post 'pdfs/encrypt', to: 'pdfs#encrypt_pdf'
+      post 'pdfs/merge', to: 'pdfs#merge_pdfs'
+      post 'pdfs/split', to: 'pdfs#split_pdf'
     end
   end
   root 'homepage#index'

@@ -59,7 +59,7 @@ module Api::V1
     end
 
     def message_for
-      Participant.other_user(current_user.id, find_room)&.user
+      Participant.other_user(current_user.id, find_room)
     end
 
     def message_params

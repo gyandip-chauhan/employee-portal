@@ -337,3 +337,44 @@
 .sent-at-placeholder {
   height: 20px;
 }
+
+.app {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.pdf-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.sidebar-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 180px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.sidebar-overlay input {
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.pdf-container {
+  border: 1px solid #ccc;
+  padding: 10px;
+  background: white;
+}
+
+.draggable-item {
+  padding: 5px;
+  background: yellow;
+  cursor: grab;
+  margin-bottom: 10px;
+}

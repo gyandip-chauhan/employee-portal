@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import ApiService from '../common/apiService';
+import { API_CHANGE_PASSWORD } from '../common/apiEndpoints';
+import { toast } from 'react-toastify';
 
 const ChangePassword = () => {
   const [oldPassword, setOldPassword] = useState('');
@@ -20,29 +23,22 @@ const ChangePassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (newPassword !== confirmNewPassword) {
-      setError('New passwords do not match');
-      return;
-    }
-
     try {
-      const response = await fetch('/api/v1/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ oldPassword, newPassword }),
+      const response = await ApiService.post(API_CHANGE_PASSWORD, { 
+        user: {
+          password: newPassword,
+          password_confirmation: confirmNewPassword,
+          password_challenge: oldPassword
+        }
       });
-
-      if (!response.ok) {
-        throw new Error('Change password failed');
-      }
-
-      // Handle successful password change, e.g., redirect to profile page
-      console.log('Password changed successfully');
+      toast.success(`${response.data.notice}`);
     } catch (error) {
-      setError('Change password failed. Please try again.');
+      const err = error;
+      if (err.response && err.response.data && err.response.data.error) {
+        toast.error(err.response.data.error);
+      } else {
+        toast.error(`${err}`);
+      }
     }
   };
 

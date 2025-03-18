@@ -1,52 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { AppBar, Toolbar, Typography, Button, IconButton, Menu, MenuItem, Avatar, Drawer, List, ListItem, ListItemText } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Link, useNavigate } from "react-router-dom";
-import ApiService from "../common/apiService";
-import { API_LOGOUT } from "../common/apiEndpoints";
-import { toast } from "react-toastify";
+import { UserContext } from "../../contexts/UserContext";
 
-const Header = ({ userData, setUserData, setDepartmentId }) => {
-  const isLoggedIn = !!userData;
+const Header = () => {
+  const { currentUser, handleLogout } = useContext(UserContext);
+  const isLoggedIn = !!currentUser;
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleLogout = async () => {
-    try {
-      const response = await ApiService.delete(API_LOGOUT);
-      localStorage.removeItem("userData");
-      setUserData(null);
-      setDepartmentId(null);
-      navigate("/");
-      toast.success(response.data.notice);
-    } catch (error) {
-      toast.error(error.toString());
-    }
-  };
-
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
-  const getInitials = (name) => name.split(" ").map((n) => n[0]).join("");
-  const fullName = isLoggedIn ? `${userData.first_name} ${userData.last_name}` : "";
+  const getInitials = (name) => name?.split(" ").map((n) => n[0]).join("");
+  const fullName = isLoggedIn ? `${currentUser.first_name} ${currentUser.last_name}` : "";
 
   return (
     <>
-      {/* Header Bar */}
       <AppBar position="fixed" sx={{ background: "linear-gradient(90deg, #1976D2, #1565C0)", boxShadow: 3 }}>
         <Toolbar>
-          {/* Mobile Menu Button */}
           <IconButton edge="start" color="inherit" onClick={() => setDrawerOpen(true)} sx={{ display: { xs: "block", md: "none" } }}>
             <MenuIcon />
           </IconButton>
 
-          {/* Logo */}
           <Typography variant="h6" sx={{ flexGrow: 1, fontWeight: "bold", letterSpacing: 1 }}>
             <Link to="/" style={{ textDecoration: "none", color: "white" }}>Employee Directory</Link>
           </Typography>
 
-          {/* Desktop Navigation */}
           {isLoggedIn ? (
             <div style={{ display: "flex", alignItems: "center" }}>
               <Button color="inherit" component={Link} to="/attendance">Home</Button>
@@ -54,7 +36,6 @@ const Header = ({ userData, setUserData, setDepartmentId }) => {
               <Button color="inherit" component={Link} to="/team">Team</Button>
               <Button color="inherit" component={Link} to="/chat">Chat</Button>
 
-              {/* User Avatar & Dropdown Menu */}
               <IconButton onClick={handleMenuOpen} sx={{ ml: 2 }}>
                 <Avatar sx={{ bgcolor: "#FF5722" }}>{getInitials(fullName)}</Avatar>
               </IconButton>
@@ -73,7 +54,6 @@ const Header = ({ userData, setUserData, setDepartmentId }) => {
         </Toolbar>
       </AppBar>
 
-      {/* Mobile Drawer */}
       <Drawer anchor="left" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <List sx={{ width: 250 }}>
           <ListItem button component={Link} to="/" onClick={() => setDrawerOpen(false)}>
